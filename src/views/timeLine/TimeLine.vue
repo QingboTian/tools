@@ -22,8 +22,13 @@
             <el-option label="效果2" value="2"> </el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="宽度">
+          <el-input v-model="form.width"></el-input>
+        </el-form-item>
         <el-form-item>
-          <el-button type="primary">导出图片</el-button>
+          <el-button type="primary" @click="exportImage()"
+            >导出效果图</el-button
+          >
         </el-form-item>
       </el-form>
     </div>
@@ -44,11 +49,11 @@
           </el-input>
         </div>
       </div>
-      <div class="right">
+      <div class="right" :style="'flex:' + form.width">
         <div style="font-size: x-large; margin-bottom: 20px">
           <center>效果图</center>
         </div>
-        <div>
+        <div ref="screen">
           <div v-if="form.effect == 1">
             <div>
               <div class="title">{{ form.title }}</div>
@@ -93,6 +98,8 @@
 </template>
 
 <script>
+import html2canvas from "html2canvas";
+// import Cookies from "js-cookie";
 export default {
   data() {
     return {
@@ -100,6 +107,7 @@ export default {
         title: "12月17日云平台主管团建",
         model: "2",
         effect: "1",
+        width: "5",
       },
       activities: [
         {
@@ -189,11 +197,56 @@ export default {
     };
   },
   methods: {
-    init() {
-      this.inputText = JSON.stringify(this.activities, null, 4);
+    localStorageChang(key, value) {
+      localStorage.setItem(key, value);
     },
+
+    init() {
+      // 首先尝试从本地cookie获取
+      var ok = localStorage.getItem("tools-time-line");
+      if (ok) {
+        this.inputText = ok;
+        this.activities = JSON.parse(ok);
+        return;
+      }
+      this.inputText = JSON.stringify(this.activities, null, 4);
+      // 保存到本地cookie
+      this.localStorageChang("tools-time-line", this.inputText);
+    },
+
     inputTextChange() {
       this.activities = JSON.parse(this.inputText);
+      this.localStorageChang("tools-time-line", this.inputText);
+    },
+
+    exportImage() {
+      html2canvas(this.$refs.screen, {
+        backgroundColor: "#FFFFFF",
+        useCORS: true,
+      }).then((canvas) => {
+        if (navigator.msSaveBlob) {
+          // IE10+
+          let blob = canvas.msToBlob();
+          return navigator.msSaveBlob(blob, name);
+        } else {
+          let imageurl = canvas.toDataURL("image/png");
+          //这里需要自己选择命名规则
+          let imagename = new Date().getTime() + "";
+          this.fileDownload(imageurl, imagename);
+        }
+      });
+    },
+    
+    //下载截屏图片
+    fileDownload(downloadUrl, downloadName) {
+      let aLink = document.createElement("a");
+      aLink.style.display = "none";
+      aLink.href = downloadUrl;
+      aLink.download = `${downloadName}.jpg`;
+      // 触发点击-然后移除
+      document.body.appendChild(aLink);
+      aLink.click();
+      document.body.removeChild(aLink);
     },
   },
 
@@ -239,13 +292,13 @@ export default {
 }
 
 .body .left {
-  flex: 1;
+  flex: 5;
   margin-right: 20px;
 }
 
 .body .right {
   height: 100%;
-  flex: 1;
+  flex: 5;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.04);
   padding: 20px;
 }

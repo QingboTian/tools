@@ -164,9 +164,20 @@
               />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="addNode()" size="small"
+              <el-button
+                type="primary"
+                @click="addNode()"
+                v-if="updateFlag"
+                size="small"
+                >更新</el-button
+              ><el-button
+                type="primary"
+                @click="addNode()"
+                v-if="!updateFlag"
+                size="small"
                 >创建</el-button
               >
+
               <el-button type="danger" @click="clearNode()" size="small"
                 >清空</el-button
               >
@@ -316,6 +327,7 @@ const cookieKey = "tools-time-line";
 export default {
   data() {
     return {
+      updateFlag: false,
       rules: {
         title: [{ required: true, message: "请输入正文标题", trigger: "blur" }],
         contents: [
@@ -461,7 +473,8 @@ export default {
       }
       for (var i = 0; i < this.activities.length; i++) {
         if (i == this.updateNode - 1) {
-          this.simpleForm = this.activities[i];
+          this.updateFlag = true;
+          this.simpleForm = JSON.parse(JSON.stringify(this.activities[i]));
           this.color = this.simpleForm.color;
           return;
         }
@@ -500,7 +513,7 @@ export default {
         type: "warning",
       })
         .then(() => {
-          this.activities.splice(this.deleteNode, 1);
+          this.activities.splice(this.deleteNode - 1, 1);
           this.$message({
             type: "success",
             message: "删除成功!",
@@ -511,8 +524,17 @@ export default {
     addNode() {
       this.$refs["simpleForm"].validate((valid) => {
         if (valid) {
-          var data = JSON.parse(JSON.stringify(this.simpleForm));
-          this.activities.push(data);
+          var tempData = JSON.parse(JSON.stringify(this.simpleForm));
+          if (this.updateFlag) {
+            for (var i = 0; i < this.activities.length; i++) {
+              if (this.updateNode == i + 1) {
+                this.activities[i] = tempData;
+              }
+            }
+            this.updateFlag = false;
+          } else {
+            this.activities.push(tempData);
+          }
         } else {
           return false;
         }

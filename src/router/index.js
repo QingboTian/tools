@@ -22,6 +22,11 @@ const routes = [
     path: '/timeLine',
     name: 'TimeLine',
     component: () => import('../views/timeLine/TimeLine.vue')
+  },
+  {
+    path: '/navigation',
+    name: 'Navigation',
+    component: () => import('../views/navigation/Navigation.vue')
   }
 ]
 
